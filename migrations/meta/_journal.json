@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1762272380246,
+      "tag": "0000_swift_ink",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1762273731662,
+      "tag": "0001_slim_brood",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762557377872,
+      "tag": "0002_absent_scorpion",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1762558149164,
+      "tag": "0003_magical_gressill",
+      "breakpoints": true
+    }
+  ]
+}

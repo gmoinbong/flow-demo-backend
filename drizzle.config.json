@@ -1,0 +1,11 @@
+{
+  "schema": "./src/shared/core/infrastructure/database/schema/index.ts",
+  "out": "./migrations",
+  "dialect": "postgresql",
+  "dbCredentials": {
+    "url": "${DATABASE_URL}"
+  },
+  "verbose": true,
+  "strict": true
+}
+
