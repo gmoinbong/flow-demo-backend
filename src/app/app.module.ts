@@ -8,6 +8,7 @@ import { DevtoolsModule } from '@nestjs/devtools-integration';
 import { SharedModule } from 'src/shared';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { ProfileModule } from 'src/modules/profile/profile.module';
+import { ScraperModule } from 'src/modules/scraper/scraper.module';
 
 @Module({
   controllers: [AppController],
@@ -23,6 +24,7 @@ import { ProfileModule } from 'src/modules/profile/profile.module';
     LoggerModule.forRoot(loggerOptions()),
     AuthModule,
     ProfileModule,
+    ScraperModule,
   ],
 })
 export class AppModule {}

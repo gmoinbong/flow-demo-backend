@@ -8,6 +8,7 @@ import {
   jsonb,
   varchar,
   boolean,
+  unique,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -146,6 +147,71 @@ export const creator_brand_relationships = pgTable(
   },
 );
 
+// Campaigns table
+export const campaigns = pgTable('campaigns', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  brand_id: uuid('brand_id').references(() => brands.id).notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  budget: integer('budget'), // in cents or smallest currency unit
+  goals: jsonb('goals'), // array of strings
+  target_audience: text('target_audience'),
+  platforms: jsonb('platforms'), // array of platform names
+  start_date: timestamp('start_date').notNull(),
+  end_date: timestamp('end_date'),
+  status: varchar('status', { length: 20 }), // draft, active, paused, completed
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+// Campaign allocations - budget distribution to creators
+export const campaign_allocations = pgTable('campaign_allocations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  campaign_id: uuid('campaign_id').references(() => campaigns.id).notNull(),
+  creator_id: uuid('creator_id').references(() => profile.id).notNull(),
+  allocated_budget: integer('allocated_budget'), // in cents
+  current_budget: integer('current_budget'), // remaining budget
+  performance: jsonb('performance'), // { reach, engagement, conversions, ctr }
+  status: varchar('status', { length: 20 }), // pending, accepted, active, completed, declined
+  tracking_link: text('tracking_link'),
+  contract_accepted: boolean('contract_accepted').default(false),
+  contract_accepted_at: timestamp('contract_accepted_at'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+// User subscriptions - when brand subscribes to creator
+export const user_subscriptions = pgTable('user_subscriptions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  brand_id: uuid('brand_id').references(() => brands.id).notNull(),
+  creator_id: uuid('creator_id').references(() => profile.id).notNull(),
+  subscribed_at: timestamp('subscribed_at').defaultNow().notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+});
+
+// Posts from social platforms
+export const posts = pgTable(
+  'posts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    social_account_id: uuid('social_account_id').references(() => social_accounts.id).notNull(),
+    platform_post_id: text('platform_post_id').notNull(), // unique ID from platform
+    platform: varchar('platform', { length: 20 }).notNull(), // youtube, tiktok, instagram
+    content: text('content'), // post text/caption
+    media_urls: jsonb('media_urls'), // array of media URLs
+    posted_at: timestamp('posted_at').notNull(), // when post was published on platform
+    metrics: jsonb('metrics'), // { likes, comments, shares, views, etc }
+    raw_data: jsonb('raw_data'), // full raw data from scraper
+    scraped_at: timestamp('scraped_at').defaultNow(),
+    created_at: timestamp('created_at').defaultNow(),
+    updated_at: timestamp('updated_at').defaultNow(),
+  },
+  (table) => ({
+    // Unique constraint: one post per platform_post_id per social_account
+    uniquePostPerAccount: unique().on(table.social_account_id, table.platform_post_id),
+  }),
+);
+
 // Analytics reports
 export const analytics_reports = pgTable('analytics_reports', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -205,6 +271,8 @@ export const profileRelations = relations(profile, ({ one, many }) => ({
     fields: [profile.id],
     references: [brands.profile_id],
   }),
+  campaignAllocations: many(campaign_allocations),
+  subscriptions: many(user_subscriptions),
 }));
 
 export const socialAccountsRelations = relations(
@@ -216,6 +284,7 @@ export const socialAccountsRelations = relations(
     }),
     stats: many(platform_stats),
     jobs: many(scraper_jobs),
+    posts: many(posts),
   }),
 );
 
@@ -232,6 +301,8 @@ export const brandsRelations = relations(brands, ({ one, many }) => ({
     references: [profile.id],
   }),
   creatorRelationships: many(creator_brand_relationships),
+  campaigns: many(campaigns),
+  subscriptions: many(user_subscriptions),
 }));
 
 export const creatorBrandRelationshipsRelations = relations(
@@ -247,6 +318,49 @@ export const creatorBrandRelationshipsRelations = relations(
     }),
   }),
 );
+
+export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
+  brand: one(brands, {
+    fields: [campaigns.brand_id],
+    references: [brands.id],
+  }),
+  allocations: many(campaign_allocations),
+}));
+
+export const campaignAllocationsRelations = relations(
+  campaign_allocations,
+  ({ one }) => ({
+    campaign: one(campaigns, {
+      fields: [campaign_allocations.campaign_id],
+      references: [campaigns.id],
+    }),
+    creator: one(profile, {
+      fields: [campaign_allocations.creator_id],
+      references: [profile.id],
+    }),
+  }),
+);
+
+export const userSubscriptionsRelations = relations(
+  user_subscriptions,
+  ({ one }) => ({
+    brand: one(brands, {
+      fields: [user_subscriptions.brand_id],
+      references: [brands.id],
+    }),
+    creator: one(profile, {
+      fields: [user_subscriptions.creator_id],
+      references: [profile.id],
+    }),
+  }),
+);
+
+export const postsRelations = relations(posts, ({ one }) => ({
+  socialAccount: one(social_accounts, {
+    fields: [posts.social_account_id],
+    references: [social_accounts.id],
+  }),
+}));
 
 export const analyticsReportsRelations = relations(
   analytics_reports,

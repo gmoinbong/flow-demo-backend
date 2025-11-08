@@ -1,7 +1,7 @@
+import { NotFoundException } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { IProfileRepository } from '../../domain/repositories/profile.repository.interface';
 import { Profile } from '../../domain/entities/profile.entity';
-import { NotFoundError } from 'src/shared/core/domain/errors';
 import { Database } from 'src/shared/core/infrastructure/database/database.types';
 import { brands } from 'src/shared/core/infrastructure/database/schema';
 
@@ -41,7 +41,7 @@ export class GetProfileUseCase {
   async execute(userId: string): Promise<GetProfileOutput> {
     const profileEntity = await this.profileRepository.findByUserId(userId);
     if (!profileEntity) {
-      throw new NotFoundError('Profile not found');
+      throw new NotFoundException('Profile not found');
     }
 
     // Try to find brand linked to this profile

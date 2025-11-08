@@ -19,11 +19,12 @@ import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { CurrentUser } from 'src/modules/auth/presentation/decorators/current-user.decorator';
 import { JwtAuthGuard } from 'src/modules/auth/presentation/guards/jwt.guard';
 import { User } from 'src/modules/auth/domain/entities/user.entity';
+import { ProfileResponseDto } from '../dto/profile-response.dto';
 
 @Controller('profile')
 @ApiTags('Profile')
 @UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
+@ApiBearerAuth('bearer')
 export class ProfileController {
   constructor(
     private readonly getProfileUseCase: GetProfileUseCase,
@@ -32,18 +33,50 @@ export class ProfileController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, description: 'Profile retrieved successfully' })
-  @ApiResponse({ status: 404, description: 'Profile not found' })
+  @ApiOperation({
+    summary: 'Get current user profile',
+    description: 'Получить профиль текущего пользователя',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile retrieved successfully',
+    type: ProfileResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Profile not found for current user',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - invalid or missing token',
+  })
   async getProfile(@CurrentUser() user: User) {
     return this.getProfileUseCase.execute(user.id);
   }
 
   @Patch()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Update current user profile' })
-  @ApiResponse({ status: 200, description: 'Profile updated successfully' })
-  @ApiResponse({ status: 404, description: 'Profile not found' })
+  @ApiOperation({
+    summary: 'Update current user profile',
+    description: 'Обновить профиль (firstName, lastName, displayName, bio, avatarUrl)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile updated successfully',
+    type: ProfileResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Profile not found for current user',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input data (validation error)',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - invalid or missing token',
+  })
   async updateProfile(
     @CurrentUser() user: { id: string; email: string },
     @Body() dto: UpdateProfileDto,

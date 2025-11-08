@@ -1,0 +1,217 @@
+{
+  "info": {
+    "name": "CreatorFlow API",
+    "description": "API collection for CreatorFlow backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.accessToken) {",
+                  "        pm.environment.set('access_token', jsonData.accessToken);",
+                  "        pm.environment.set('refresh_token', jsonData.refreshToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login to get access token. Token will be automatically saved to environment variable 'access_token'."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Get current authenticated user info"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Scraper",
+      "item": [
+        {
+          "name": "Fetch Posts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "description": "JWT access token from login"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"mrbeast\",\n  \"platform\": \"youtube\",\n  \"brandId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"campaignId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"limit\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scraper/posts",
+              "host": ["{{base_url}}"],
+              "path": ["scraper", "posts"]
+            },
+            "description": "Fetch posts by username and platform using Apify scraper.\n\n**Parameters:**\n- `username` (required): Username on platform (e.g., \"mrbeast\")\n- `platform` (required): Platform type - \"instagram\", \"tiktok\", or \"youtube\"\n- `brandId` (optional): If provided with campaignId, filters posts from campaign start\n- `campaignId` (optional): If provided with brandId, filters posts from campaign start\n- `limit` (optional): Maximum number of posts to return (default: 50)\n\n**Note:** Requires valid JWT token in Authorization header."
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Posts (All)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"mrbeast\",\n  \"platform\": \"youtube\",\n  \"brandId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"limit\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scraper/posts",
+              "host": ["{{base_url}}"],
+              "path": ["scraper", "posts"]
+            },
+            "description": "Fetch all posts (no filters)"
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Posts (Campaign)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"mrbeast\",\n  \"platform\": \"youtube\",\n  \"campaignId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"limit\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/scraper/posts",
+              "host": ["{{base_url}}"],
+              "path": ["scraper", "posts"]
+            },
+            "description": "Fetch posts filtered by campaign start date"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/profile",
+              "host": ["{{base_url}}"],
+              "path": ["profile"]
+            },
+            "description": "Get current user profile"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
+

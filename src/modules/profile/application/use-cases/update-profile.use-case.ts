@@ -1,6 +1,6 @@
+import { NotFoundException } from '@nestjs/common';
 import { IProfileRepository } from '../../domain/repositories/profile.repository.interface';
 import { Profile } from '../../domain/entities/profile.entity';
-import { NotFoundError } from 'src/shared/core/domain/errors';
 
 export interface UpdateProfileCommand {
   userId: string;
@@ -17,7 +17,7 @@ export class UpdateProfileUseCase {
   async execute(command: UpdateProfileCommand): Promise<Profile> {
     const profile = await this.profileRepository.findByUserId(command.userId);
     if (!profile) {
-      throw new NotFoundError('Profile not found');
+      throw new NotFoundException('Profile not found');
     }
 
     const updatedProfile = profile.update(
