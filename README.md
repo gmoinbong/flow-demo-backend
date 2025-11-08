@@ -25,36 +25,68 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Quick Start with Docker
+
+### Development (with hot reload)
+
+```bash
+# Start all services (PostgreSQL, Redis, Backend)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f backend
+
+# Stop all services
+docker-compose down
+```
+
+### Production build
+
+```bash
+# Build Docker image
+docker build -t creatorflow-backend:latest .
+
+# Run container
+docker run -d \
+  -p 3000:3000 \
+  -e DATABASE_URL=postgresql://user:pass@host:5432/db \
+  -e REDIS_URL=redis://host:6379 \
+  -e JWT_SECRET=your-secret \
+  creatorflow-backend:latest
+```
+
+Подробные инструкции по деплою на Render.com, Railway, Fly.io и другие платформы см. в [DEPLOY.md](./DEPLOY.md).
+
 ## Project setup
 
 ```bash
-$ yarn install
+$ npm install
 ```
 
 ## Compile and run the project
 
 ```bash
 # development
-$ yarn run start
+$ npm run start
 
 # watch mode
-$ yarn run start:dev
+$ npm run start:dev
 
 # production mode
-$ yarn run start:prod
+$ npm run start:prod
 ```
 
 ## Run tests
 
 ```bash
 # unit tests
-$ yarn run test
+$ npm run test
 
 # e2e tests
-$ yarn run test:e2e
+$ npm run test:e2e
 
 # test coverage
-$ yarn run test:cov
+$ npm run test:cov
 ```
 
 ## Deployment
