@@ -42,5 +42,21 @@ export class RoleService {
 
     return result[0].id;
   }
-}
 
+  /**
+   * Get role name by role ID
+   */
+  async getRoleNameById(roleId: number): Promise<string | null> {
+    const result = await this.db
+      .select()
+      .from(user_role)
+      .where(eq(user_role.id, roleId))
+      .limit(1);
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    return result[0].name;
+  }
+}

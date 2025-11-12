@@ -36,6 +36,7 @@ import { GoogleOAuthProvider } from './infrastructure/oauth-providers/google-oau
 import { OAuthStateService } from './application/services/oauth-state.service';
 import { OAuthTokenService } from './application/services/oauth-token.service';
 import { RoleService } from './application/services/role.service';
+import type { IUserRepository } from './domain/repositories/user.repository.interface';
 
 @Module({
   controllers: [AuthController, OAuthController],
@@ -287,8 +288,25 @@ import { RoleService } from './application/services/role.service';
         ),
     },
     // Guards
+    {
+      provide: JwtAuthGuard,
+      inject: [
+        AUTH_DI_TOKENS.JWT_SERVICE,
+        AUTH_DI_TOKENS.USER_REPOSITORY,
+        AUTH_DI_TOKENS.ROLE_SERVICE,
+      ],
+      useFactory: (
+        jwtService: JwtService,
+        userRepository: IUserRepository,
+        roleService: RoleService,
+      ) => new JwtAuthGuard(jwtService, userRepository, roleService),
+    },
+  ],
+  exports: [
+    AUTH_DI_TOKENS.JWT_SERVICE,
+    AUTH_DI_TOKENS.USER_REPOSITORY,
+    AUTH_DI_TOKENS.ROLE_SERVICE,
     JwtAuthGuard,
   ],
-  exports: [AUTH_DI_TOKENS.JWT_SERVICE, JwtAuthGuard],
 })
 export class AuthModule {}

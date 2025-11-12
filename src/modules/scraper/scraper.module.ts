@@ -36,7 +36,10 @@ import { AuthModule } from '../auth/auth.module';
         new FetchPostsUseCase(apifyScraper, db),
     },
   ],
-  exports: [FetchPostsUseCase],
+  exports: [
+    FetchPostsUseCase,
+    SCRAPER_DI_TOKENS.APIFY_SCRAPER_SERVICE, // Export for CampaignsModule
+  ],
 })
 export class ScraperModule {}
 

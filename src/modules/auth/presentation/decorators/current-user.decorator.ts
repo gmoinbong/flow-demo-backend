@@ -4,6 +4,8 @@ import { Request } from 'express';
 export interface CurrentUser {
   id: string;
   email: string;
+  roleId?: number | null;
+  role?: string;
 }
 
 /**

@@ -9,6 +9,8 @@ import { SharedModule } from 'src/shared';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { ProfileModule } from 'src/modules/profile/profile.module';
 import { ScraperModule } from 'src/modules/scraper/scraper.module';
+import { CampaignsModule } from 'src/modules/campaigns/campaigns.module';
+import { CreatorModule } from 'src/modules/creator/creator.module';
 
 @Module({
   controllers: [AppController],
@@ -25,6 +27,8 @@ import { ScraperModule } from 'src/modules/scraper/scraper.module';
     AuthModule,
     ProfileModule,
     ScraperModule,
+    CampaignsModule,
+    CreatorModule,
   ],
 })
 export class AppModule {}

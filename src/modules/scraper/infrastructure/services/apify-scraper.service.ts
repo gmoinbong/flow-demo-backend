@@ -23,6 +23,23 @@ export interface PostData {
   rawData: Record<string, any>;
 }
 
+export interface ScrapeProfileOptions {
+  username: string;
+  platform: PlatformTypeVO;
+}
+
+export interface CreatorProfileData {
+  username: string;
+  followers: number;
+  following?: number;
+  postsCount?: number;
+  engagementRate?: number;
+  bio?: string;
+  isVerified?: boolean;
+  profileUrl?: string;
+  rawData: Record<string, any>;
+}
+
 @Injectable()
 export class ApifyScraperService {
   private client: ApifyClient;
@@ -215,5 +232,152 @@ export class ApifyScraperService {
       mediaUrls: item.thumbnailUrl ? [item.thumbnailUrl] : [],
       rawData: item,
     };
+  }
+
+  /**
+   * Scrape creator profile from social platform
+   */
+  async scrapeProfile(
+    options: ScrapeProfileOptions,
+  ): Promise<CreatorProfileData> {
+    const actorId = this.getActorId(options.platform);
+
+    // Prepare input for Apify actor (profile-specific)
+    const input = this.prepareProfileInput(options);
+
+    // Run actor
+    const run = await this.client.actor(actorId).call(input);
+
+    // Wait for run to finish (polling)
+    let currentRun = run;
+    let attempts = 0;
+    const maxAttempts = 60;
+
+    while (currentRun.status === 'RUNNING' && attempts < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const runInfo = await this.client.run(run.id).get();
+      if (!runInfo) {
+        throw new Error('Failed to get run status from Apify');
+      }
+      currentRun = runInfo;
+      attempts++;
+    }
+
+    if (currentRun.status !== 'SUCCEEDED') {
+      throw new Error(`Apify actor run failed with status: ${currentRun.status}`);
+    }
+
+    // Get dataset ID from completed run
+    const datasetId = currentRun.defaultDatasetId;
+    if (!datasetId) {
+      throw new Error('No dataset ID returned from Apify run');
+    }
+
+    // Get items from dataset (profile data is usually first item)
+    const { items } = await this.client.dataset(datasetId).listItems({
+      limit: 1,
+    });
+
+    if (items.length === 0) {
+      throw new Error('No profile data returned from Apify');
+    }
+
+    // Transform Apify results to CreatorProfileData format
+    return this.transformProfileResult(items[0], options.platform, options.username);
+  }
+
+  /**
+   * Prepare input for Apify actor for profile scraping
+   */
+  private prepareProfileInput(options: ScrapeProfileOptions): Record<string, any> {
+    switch (options.platform.value) {
+      case 'instagram':
+        return {
+          directUrls: [`https://www.instagram.com/${options.username}/`],
+          resultsType: 'profile',
+        };
+      case 'tiktok':
+        return {
+          usernames: [options.username],
+          resultsType: 'profile',
+        };
+      case 'youtube':
+        return {
+          searchKeywords: [options.username],
+          resultsType: 'channel',
+        };
+      default:
+        return {
+          startUrls: [
+            {
+              url: `https://www.${options.platform.value}.com/${options.username}`,
+            },
+          ],
+        };
+    }
+  }
+
+  /**
+   * Transform Apify profile result to CreatorProfileData format
+   */
+  private transformProfileResult(
+    item: any,
+    platform: PlatformTypeVO,
+    username: string,
+  ): CreatorProfileData {
+    switch (platform.value) {
+      case 'instagram':
+        return {
+          username,
+          followers: item.followersCount || item.followers || 0,
+          following: item.followsCount || item.following,
+          postsCount: item.postsCount || item.mediaCount,
+          engagementRate: item.engagementRate
+            ? parseFloat(item.engagementRate.replace('%', ''))
+            : undefined,
+          bio: item.biography || item.bio,
+          isVerified: item.isVerified || false,
+          profileUrl: item.url || `https://www.instagram.com/${username}/`,
+          rawData: item,
+        };
+      case 'tiktok':
+        return {
+          username,
+          followers: item.followerCount || item.followers || 0,
+          following: item.followingCount || item.following,
+          postsCount: item.videoCount || item.postsCount,
+          engagementRate: item.engagementRate
+            ? parseFloat(item.engagementRate.replace('%', ''))
+            : undefined,
+          bio: item.signature || item.bio,
+          isVerified: item.isVerified || false,
+          profileUrl: item.url || `https://www.tiktok.com/@${username}`,
+          rawData: item,
+        };
+      case 'youtube':
+        return {
+          username,
+          followers: item.subscriberCount || item.subscribers || 0,
+          postsCount: item.videoCount || item.videosCount,
+          engagementRate: item.engagementRate
+            ? parseFloat(item.engagementRate.replace('%', ''))
+            : undefined,
+          bio: item.description || item.bio,
+          isVerified: item.isVerified || false,
+          profileUrl: item.url || item.channelUrl,
+          rawData: item,
+        };
+      default:
+        return {
+          username,
+          followers: item.followers || item.followersCount || 0,
+          following: item.following || item.followingCount,
+          postsCount: item.postsCount || item.posts,
+          bio: item.bio || item.description,
+          isVerified: item.isVerified || false,
+          profileUrl: item.url,
+          rawData: item,
+        };
+    }
   }
 }
