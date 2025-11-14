@@ -36,6 +36,11 @@ import {
 import { UpdateCreatorDto } from '../dto/update-creator.dto';
 import { AddSocialProfileDto } from '../dto/add-social-profile.dto';
 import { JwtAuthGuard } from 'src/modules/auth/presentation/guards/jwt.guard';
+import { Inject } from '@nestjs/common';
+import { SHARED_DI_TOKENS } from 'src/shared/core/infrastructure/constants/tokens';
+import type { Database } from 'src/shared/core/infrastructure/database/database.types';
+import { creator_social_profiles } from 'src/shared/core/infrastructure/database/schema';
+import { eq, inArray } from 'drizzle-orm';
 
 @Controller('creators')
 @ApiTags('Creators')
@@ -49,6 +54,8 @@ export class CreatorController {
     private readonly addSocialProfileUseCase: AddSocialProfileUseCase,
     private readonly updateCreatorStatusUseCase: UpdateCreatorStatusUseCase,
     private readonly updateCreatorUseCase: UpdateCreatorUseCase,
+    @Inject(SHARED_DI_TOKENS.DATABASE_CLIENT)
+    private readonly db: Database,
   ) {}
 
   @Post()
@@ -82,6 +89,24 @@ export class CreatorController {
       status: query.status,
     });
 
+    // Get social profiles for all creators
+    const creatorIds = result.creators.map((c) => c.id);
+    const allProfiles = creatorIds.length > 0
+      ? await this.db
+          .select()
+          .from(creator_social_profiles)
+          .where(inArray(creator_social_profiles.creator_id, creatorIds))
+      : [];
+
+    const profilesMap = new Map<string, typeof allProfiles>();
+    for (const profile of allProfiles) {
+      const creatorId = profile.creator_id;
+      if (!profilesMap.has(creatorId)) {
+        profilesMap.set(creatorId, []);
+      }
+      profilesMap.get(creatorId)!.push(profile);
+    }
+
     return {
       creators: result.creators.map((creator) => ({
         id: creator.id,
@@ -90,6 +115,25 @@ export class CreatorController {
         bio: creator.bio,
         avatarUrl: creator.avatarUrl,
         status: creator.status.value,
+        socialProfiles: (profilesMap.get(creator.id) || []).map((sp) => ({
+          id: sp.id,
+          platform: sp.platform,
+          username: sp.username,
+          profileUrl: sp.profile_url,
+          followersDeclared: sp.followers_declared,
+          followersVerified: sp.followers_verified,
+          engagementRateDeclared: sp.engagement_rate_declared
+            ? Number(sp.engagement_rate_declared)
+            : null,
+          engagementRateVerified: sp.engagement_rate_verified
+            ? Number(sp.engagement_rate_verified)
+            : null,
+          location: sp.location,
+          niches: sp.niches,
+          isPrimary: sp.is_primary,
+          createdAt: sp.created_at,
+          updatedAt: sp.updated_at,
+        })),
         createdAt: creator.createdAt,
         updatedAt: creator.updatedAt,
       })),
@@ -121,6 +165,12 @@ export class CreatorController {
   async getCreatorById(@Param('id') id: string) {
     const creator = await this.getCreatorByIdUseCase.execute(id);
 
+    // Get social profiles for this creator
+    const socialProfiles = await this.db
+      .select()
+      .from(creator_social_profiles)
+      .where(eq(creator_social_profiles.creator_id, id));
+
     return {
       id: creator.id,
       userId: creator.userId,
@@ -128,6 +178,25 @@ export class CreatorController {
       bio: creator.bio,
       avatarUrl: creator.avatarUrl,
       status: creator.status.value,
+      socialProfiles: socialProfiles.map((sp) => ({
+        id: sp.id,
+        platform: sp.platform,
+        username: sp.username,
+        profileUrl: sp.profile_url,
+        followersDeclared: sp.followers_declared,
+        followersVerified: sp.followers_verified,
+        engagementRateDeclared: sp.engagement_rate_declared
+          ? Number(sp.engagement_rate_declared)
+          : null,
+        engagementRateVerified: sp.engagement_rate_verified
+          ? Number(sp.engagement_rate_verified)
+          : null,
+        location: sp.location,
+        niches: sp.niches,
+        isPrimary: sp.is_primary,
+        createdAt: sp.created_at,
+        updatedAt: sp.updated_at,
+      })),
       createdAt: creator.createdAt,
       updatedAt: creator.updatedAt,
     };
@@ -136,12 +205,23 @@ export class CreatorController {
   @Post(':id/social-profiles')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Add social profile to creator',
-    description: 'Добавить социальный профиль к креатору (Instagram, TikTok, YouTube)',
+    summary: 'Add or update social profile to creator',
+    description: `
+      Добавить или обновить социальный профиль к креатору (Instagram, TikTok, YouTube).
+      
+      **Важно:**
+      - Если профиль с указанной платформой уже существует для этого креатора, он будет обновлен
+      - Если профиля нет, будет создан новый
+      - Для каждого креатора может быть только один профиль на платформу (unique constraint)
+      
+      **Поля для обновления:**
+      - username, profileUrl, followersDeclared, engagementRateDeclared
+      - location, niches, isPrimary
+    `,
   })
   @ApiResponse({
     status: 201,
-    description: 'Social profile added successfully',
+    description: 'Social profile added or updated successfully',
   })
   @ApiResponse({
     status: 404,

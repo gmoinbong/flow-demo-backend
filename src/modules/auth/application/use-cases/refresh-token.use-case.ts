@@ -38,10 +38,14 @@ export class RefreshTokenUseCase
       throw UnauthorizedError.invalidToken();
     }
 
+    // Extract jti from token
+    const jti = payload.jti;
+    if (!jti) {
+      throw UnauthorizedError.invalidToken();
+    }
+
     // Check if token exists in repository (not revoked)
-    const tokenExists = await this.refreshTokenRepository.exists(
-      input.refreshToken,
-    );
+    const tokenExists = await this.refreshTokenRepository.exists(jti);
     if (!tokenExists) {
       throw UnauthorizedError.invalidToken();
     }
@@ -53,23 +57,29 @@ export class RefreshTokenUseCase
     }
 
     // Delete old refresh token (rotation)
-    await this.refreshTokenRepository.deleteByToken(input.refreshToken);
+    await this.refreshTokenRepository.deleteByJti(jti);
 
     // Generate new tokens
-    const newAccessToken = this.jwtService.generateAccessToken(
-      user.id,
-      user.email.getValue(),
-    );
     const newRefreshToken = this.jwtService.generateRefreshToken(
       user.id,
       user.email.getValue(),
     );
+    const newRefreshJti = this.jwtService.getJti(newRefreshToken.getValue());
+    
+    if (!newRefreshJti) {
+      throw new Error('Failed to generate refresh token jti');
+    }
 
     // Save new refresh token
     await this.refreshTokenRepository.save(
-      newRefreshToken.getValue(),
+      newRefreshJti,
       user.id,
       newRefreshToken.getExpiresAt(),
+    );
+
+    const newAccessToken = this.jwtService.generateAccessToken(
+      user.id,
+      user.email.getValue(),
     );
 
     return {

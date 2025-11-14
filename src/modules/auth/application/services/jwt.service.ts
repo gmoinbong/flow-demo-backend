@@ -1,5 +1,6 @@
 import * as jwt from 'jsonwebtoken';
 import type { SignOptions } from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
 import { JwtToken } from '../../domain/value-objects/jwt-token.vo';
 
 // Re-export JwtToken for convenience
@@ -9,6 +10,7 @@ export interface JwtPayload {
   sub: string; // user id
   email: string;
   type: 'access' | 'refresh';
+  jti?: string; // JWT ID for token tracking
 }
 
 export interface JwtConfig {
@@ -26,11 +28,12 @@ export class JwtService {
   /**
    * Generate access token
    */
-  generateAccessToken(userId: string, email: string): JwtToken {
+  generateAccessToken(userId: string, email: string, jti?: string): JwtToken {
     const payload: JwtPayload = {
       sub: userId,
       email,
       type: 'access',
+      jti: jti || randomUUID(),
     };
 
     const expiresIn = this.config.accessTokenExpiry;
@@ -44,13 +47,15 @@ export class JwtService {
   }
 
   /**
-   * Generate refresh token
+   * Generate refresh token with jti for tracking
    */
-  generateRefreshToken(userId: string, email: string): JwtToken {
+  generateRefreshToken(userId: string, email: string, jti?: string): JwtToken {
+    const tokenJti = jti || randomUUID();
     const payload: JwtPayload = {
       sub: userId,
       email,
       type: 'refresh',
+      jti: tokenJti,
     };
 
     const expiresIn = this.config.refreshTokenExpiry;
@@ -61,6 +66,18 @@ export class JwtService {
     const expiresAt = this.calculateExpiry(expiresIn);
 
     return JwtToken.create(token, expiresAt);
+  }
+
+  /**
+   * Extract jti from token
+   */
+  getJti(token: string): string | undefined {
+    try {
+      const decoded = jwt.decode(token) as JwtPayload;
+      return decoded?.jti;
+    } catch {
+      return undefined;
+    }
   }
 
   /**

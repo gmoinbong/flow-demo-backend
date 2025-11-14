@@ -14,6 +14,7 @@ import {
 } from '../../domain/errors/auth-errors';
 import { OAuthStateService } from '../services/oauth-state.service';
 import { OAuthTokenService } from '../services/oauth-token.service';
+import { IRefreshTokenRepository } from '../../infrastructure/persistence/refresh-token.repository';
 import { randomUUID } from 'crypto';
 
 export interface OAuthCallbackInput {
@@ -46,6 +47,7 @@ export class OAuthCallbackUseCase
     private readonly jwtService: JwtService,
     private readonly oauthStateService: OAuthStateService,
     private readonly oauthTokenService: OAuthTokenService,
+    private readonly refreshTokenRepository: IRefreshTokenRepository,
   ) {}
 
   async execute(input: OAuthCallbackInput): Promise<OAuthCallbackOutput> {
@@ -125,11 +127,24 @@ export class OAuthCallbackUseCase
       }
 
       // Generate JWT tokens
-      const accessToken = this.jwtService.generateAccessToken(
+      const refreshToken = this.jwtService.generateRefreshToken(
         user.id,
         user.email.getValue(),
       );
-      const refreshToken = this.jwtService.generateRefreshToken(
+      const refreshJti = this.jwtService.getJti(refreshToken.getValue());
+      
+      if (!refreshJti) {
+        throw new Error('Failed to generate refresh token jti');
+      }
+
+      // Save refresh token to Redis
+      await this.refreshTokenRepository.save(
+        refreshJti,
+        user.id,
+        refreshToken.getExpiresAt(),
+      );
+
+      const accessToken = this.jwtService.generateAccessToken(
         user.id,
         user.email.getValue(),
       );

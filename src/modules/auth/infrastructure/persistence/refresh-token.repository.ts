@@ -3,19 +3,19 @@
  */
 export interface IRefreshTokenRepository {
   /**
-   * Save refresh token
+   * Save refresh token by jti
    */
-  save(token: string, userId: string, expiresAt: Date): Promise<void>;
+  save(jti: string, userId: string, expiresAt: Date): Promise<void>;
 
   /**
-   * Check if token exists
+   * Check if token exists by jti
    */
-  exists(token: string): Promise<boolean>;
+  exists(jti: string): Promise<boolean>;
 
   /**
-   * Delete token by token value
+   * Delete token by jti
    */
-  deleteByToken(token: string): Promise<void>;
+  deleteByJti(jti: string): Promise<void>;
 
   /**
    * Delete all tokens for user

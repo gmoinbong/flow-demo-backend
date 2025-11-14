@@ -35,6 +35,95 @@ export class GetCreatorsQueryDto {
   status?: 'active' | 'pending' | 'suspended';
 }
 
+export class SocialProfileResponseDto {
+  @ApiProperty({
+    description: 'Social profile unique identifier',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: 'Platform name',
+    enum: ['instagram', 'tiktok', 'youtube'],
+    example: 'instagram',
+  })
+  platform: string;
+
+  @ApiProperty({
+    description: 'Username on the platform',
+    example: 'johndoe',
+  })
+  username: string;
+
+  @ApiProperty({
+    description: 'Profile URL',
+    example: 'https://instagram.com/johndoe',
+    required: false,
+  })
+  profileUrl: string | null;
+
+  @ApiProperty({
+    description: 'Number of followers (declared)',
+    example: 50000,
+    required: false,
+  })
+  followersDeclared: number | null;
+
+  @ApiProperty({
+    description: 'Number of followers (verified)',
+    example: 52000,
+    required: false,
+  })
+  followersVerified: number | null;
+
+  @ApiProperty({
+    description: 'Engagement rate (declared)',
+    example: 3.5,
+    required: false,
+  })
+  engagementRateDeclared: number | null;
+
+  @ApiProperty({
+    description: 'Engagement rate (verified)',
+    example: 3.8,
+    required: false,
+  })
+  engagementRateVerified: number | null;
+
+  @ApiProperty({
+    description: 'Location',
+    example: 'United States',
+    required: false,
+  })
+  location: string | null;
+
+  @ApiProperty({
+    description: 'Content niches',
+    example: ['fashion', 'lifestyle'],
+    required: false,
+    type: [String],
+  })
+  niches: string[] | null;
+
+  @ApiProperty({
+    description: 'Is this the primary profile',
+    example: true,
+  })
+  isPrimary: boolean;
+
+  @ApiProperty({
+    description: 'Creation timestamp',
+    example: '2024-01-01T00:00:00Z',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'Last update timestamp',
+    example: '2024-01-01T00:00:00Z',
+  })
+  updatedAt: Date;
+}
+
 export class CreatorResponseDto {
   @ApiProperty({
     description: 'Creator unique identifier',
@@ -77,6 +166,13 @@ export class CreatorResponseDto {
   status: string;
 
   @ApiProperty({
+    description: 'Social profiles',
+    type: [SocialProfileResponseDto],
+    required: false,
+  })
+  socialProfiles?: SocialProfileResponseDto[];
+
+  @ApiProperty({
     description: 'Creation timestamp',
     example: '2024-01-01T00:00:00Z',
   })
@@ -114,4 +210,3 @@ export class GetCreatorsResponseDto {
   })
   offset: number;
 }
-

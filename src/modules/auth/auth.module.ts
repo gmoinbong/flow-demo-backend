@@ -96,8 +96,8 @@ import type { IUserRepository } from './domain/repositories/user.repository.inte
     },
     {
       provide: AUTH_DI_TOKENS.REFRESH_TOKEN_REPOSITORY,
-      inject: [SHARED_DI_TOKENS.DATABASE_CLIENT],
-      useFactory: (db: Database) => new RefreshTokenRepository(db),
+      inject: [AUTH_DI_TOKENS.REDIS_CLIENT],
+      useFactory: (redis: any) => new RefreshTokenRepository(redis),
     },
     {
       provide: AUTH_DI_TOKENS.RESET_TOKEN_REPOSITORY,
@@ -183,20 +183,33 @@ import type { IUserRepository } from './domain/repositories/user.repository.inte
         AUTH_DI_TOKENS.PASSWORD_SERVICE,
         AUTH_DI_TOKENS.JWT_SERVICE,
         AUTH_DI_TOKENS.REDIS_LOCKOUT_SERVICE,
+        AUTH_DI_TOKENS.REFRESH_TOKEN_REPOSITORY,
       ],
       useFactory: (
         userRepo: any,
         passwordService: PasswordService,
         jwtService: JwtService,
         lockoutService: RedisLockoutService,
+        refreshTokenRepo: IRefreshTokenRepository,
       ) =>
-        new LoginUseCase(userRepo, passwordService, jwtService, lockoutService),
+        new LoginUseCase(
+          userRepo,
+          passwordService,
+          jwtService,
+          lockoutService,
+          refreshTokenRepo,
+        ),
     },
     {
       provide: LogoutUseCase,
-      inject: [AUTH_DI_TOKENS.REFRESH_TOKEN_REPOSITORY],
-      useFactory: (refreshTokenRepo: IRefreshTokenRepository) =>
-        new LogoutUseCase(refreshTokenRepo),
+      inject: [
+        AUTH_DI_TOKENS.REFRESH_TOKEN_REPOSITORY,
+        AUTH_DI_TOKENS.JWT_SERVICE,
+      ],
+      useFactory: (
+        refreshTokenRepo: IRefreshTokenRepository,
+        jwtService: JwtService,
+      ) => new LogoutUseCase(refreshTokenRepo, jwtService),
     },
     {
       provide: RefreshTokenUseCase,
@@ -269,6 +282,7 @@ import type { IUserRepository } from './domain/repositories/user.repository.inte
         AUTH_DI_TOKENS.JWT_SERVICE,
         AUTH_DI_TOKENS.OAUTH_STATE_SERVICE,
         AUTH_DI_TOKENS.OAUTH_TOKEN_SERVICE,
+        AUTH_DI_TOKENS.REFRESH_TOKEN_REPOSITORY,
       ],
       useFactory: (
         oauthProviderService: OAuthProviderService,
@@ -277,6 +291,7 @@ import type { IUserRepository } from './domain/repositories/user.repository.inte
         jwtService: JwtService,
         oauthStateService: OAuthStateService,
         oauthTokenService: OAuthTokenService,
+        refreshTokenRepo: IRefreshTokenRepository,
       ) =>
         new OAuthCallbackUseCase(
           oauthProviderService,
@@ -285,6 +300,7 @@ import type { IUserRepository } from './domain/repositories/user.repository.inte
           jwtService,
           oauthStateService,
           oauthTokenService,
+          refreshTokenRepo,
         ),
     },
     // Guards
