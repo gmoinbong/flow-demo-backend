@@ -141,7 +141,8 @@ window.location.href = authorizationUrl;
     const result = await this.oauthInitiateUseCase.execute({
       provider,
       redirectUri:
-        redirectUri || `http://localhost:3000/auth/oauth/${provider}/callback`,
+        redirectUri ||
+        `${this.configService.get<string>('BACKEND_URL')}/auth/oauth/${provider}/callback`,
     });
 
     return {
@@ -213,7 +214,8 @@ Client → GET /auth/oauth/{provider}/authorize
     const result = await this.oauthInitiateUseCase.execute({
       provider,
       redirectUri:
-        redirectUri || `http://localhost:3000/auth/oauth/${provider}/callback`,
+        redirectUri ||
+        `${this.configService.get<string>('BACKEND_URL')}/auth/oauth/${provider}/callback`,
     });
 
     // Store state in session/cookie for verification (in production, use secure session)
@@ -300,13 +302,13 @@ This endpoint is called by the OAuth provider after user authorization. It:
       code,
       state,
       redirectUri:
-        redirectUri || `http://localhost:3000/auth/oauth/${provider}/callback`,
+        redirectUri ||
+        `${this.configService.get<string>('BACKEND_URL')}/auth/oauth/${provider}/callback`,
     });
 
     // Get frontend URL from query param, env variable, or default
     const frontendUrl =
-      frontendRedirectUri ||
-      this.configService.get<string>('FRONTEND_URL')
+      frontendRedirectUri || this.configService.get<string>('FRONTEND_URL');
 
     // Build redirect URL with tokens in hash fragment (more secure than query params)
     const redirectUrl = new URL('/auth/callback', frontendUrl);

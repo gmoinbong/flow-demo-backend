@@ -22,9 +22,7 @@ export function loadOAuthConfig(configService: ConfigService): OAuthConfig {
     config.google = {
       clientId: googleClientId,
       clientSecret: googleClientSecret,
-      redirectUri:
-        configService.get<string>('GOOGLE_REDIRECT_URI') ||
-        'http://localhost:3000/auth/oauth/google/callback',
+      redirectUri: configService.get<string>('GOOGLE_REDIRECT_URI') ?? '',
     };
   }
 
@@ -35,25 +33,22 @@ export function loadOAuthConfig(configService: ConfigService): OAuthConfig {
     config.tiktok = {
       clientId: tiktokClientId,
       clientSecret: tiktokClientSecret,
-      redirectUri:
-        configService.get<string>('TIKTOK_REDIRECT_URI') ||
-        'http://localhost:3000/auth/oauth/tiktok/callback',
+      redirectUri: configService.get<string>('TIKTOK_REDIRECT_URI') ?? '',
     };
   }
 
   // Instagram
   const instagramClientId = configService.get<string>('INSTAGRAM_CLIENT_ID');
-  const instagramClientSecret = configService.get<string>('INSTAGRAM_CLIENT_SECRET');
+  const instagramClientSecret = configService.get<string>(
+    'INSTAGRAM_CLIENT_SECRET',
+  );
   if (instagramClientId && instagramClientSecret) {
     config.instagram = {
       clientId: instagramClientId,
       clientSecret: instagramClientSecret,
-      redirectUri:
-        configService.get<string>('INSTAGRAM_REDIRECT_URI') ||
-        'http://localhost:3000/auth/oauth/instagram/callback',
+      redirectUri: configService.get<string>('INSTAGRAM_REDIRECT_URI') ?? '',
     };
   }
 
   return config;
 }
-
