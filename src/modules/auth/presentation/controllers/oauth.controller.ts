@@ -48,7 +48,7 @@ Initiates the OAuth 2.0 authorization flow with server-side redirect. This endpo
 
 **How to use:**
 - Navigate to \`/auth/oauth/{provider}/initiate\`
-- Optionally specify \`redirect_uri\` query parameter (defaults to \`http://localhost:3000/auth/oauth/{provider}/callback\`)
+- Optionally specify \`redirect_uri\` query parameter (defaults to \`http://localhost:3000/api/auth/oauth/{provider}/callback\`)
 - User will be redirected to the OAuth provider's login page
 
 **Important:** After authorization, the provider redirects back to your callback URL with an authorization code.
@@ -58,7 +58,7 @@ Initiates the OAuth 2.0 authorization flow with server-side redirect. This endpo
 Client → GET /auth/oauth/{provider}/initiate 
       → Redirect to OAuth Provider
       → User authorizes
-      → Redirect to /auth/oauth/{provider}/callback?code=...&state=...
+      → Redirect to /api/auth/oauth/{provider}/callback?code=...&state=...
 \`\`\``,
   })
   @ApiParam({
@@ -73,8 +73,8 @@ Client → GET /auth/oauth/{provider}/initiate
     required: false,
     allowEmptyValue: true,
     description:
-      'Callback URL where OAuth provider will redirect after authorization. Must match the URI configured in OAuth provider settings. If not provided, defaults to: http://localhost:3000/auth/oauth/{provider}/callback',
-    example: 'http://localhost:3000/auth/oauth/google/callback',
+      'Callback URL where OAuth provider will redirect after authorization. Must match the URI configured in OAuth provider settings. If not provided, defaults to: http://localhost:3000/api/auth/oauth/{provider}/callback',
+    example: 'http://localhost:3000/api/auth/oauth/google/callback',
   })
   @ApiResponse({
     status: 302,
@@ -86,10 +86,13 @@ Client → GET /auth/oauth/{provider}/initiate
     @Query('redirect_uri') redirectUri: string | undefined,
     @Res() res: Response,
   ) {
+    const defaultRedirectUri =
+      redirectUri ||
+      `${this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000'}/api/auth/oauth/${provider}/callback`;
+    
     const result = await this.oauthInitiateUseCase.execute({
       provider,
-      redirectUri:
-        redirectUri || `http://localhost:3000/auth/oauth/${provider}/callback`,
+      redirectUri: defaultRedirectUri,
     });
 
     res.redirect(result.authorizationUrl);
@@ -109,7 +112,7 @@ Returns the OAuth authorization URL as JSON. Use this endpoint when you need to 
 
 **Frontend usage:**
 \`\`\`javascript
-const response = await fetch('/auth/oauth/google/url?redirect_uri=http://localhost:3000/auth/oauth/google/callback');
+const response = await fetch('/api/auth/oauth/google/url?redirect_uri=http://localhost:3000/api/auth/oauth/google/callback');
 const { authorizationUrl } = await response.json();
 window.location.href = authorizationUrl;
 \`\`\``,
@@ -142,7 +145,7 @@ window.location.href = authorizationUrl;
       provider,
       redirectUri:
         redirectUri ||
-        `${this.configService.get<string>('BACKEND_URL')}/auth/oauth/${provider}/callback`,
+        `${this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000'}/api/auth/oauth/${provider}/callback`,
     });
 
     return {
@@ -173,7 +176,7 @@ Initiates the OAuth 2.0 authorization flow with server-side redirect. This endpo
 **How to use in Swagger:**
 - Click "Try it out"
 - Select provider: \`google\`, \`tiktok\`, or \`instagram\`
-- Optionally specify \`redirect_uri\` (defaults to \`http://localhost:3000/auth/oauth/callback\`)
+- Optionally specify \`redirect_uri\` (defaults to \`http://localhost:3000/api/auth/oauth/callback\`)
 - Click "Execute" - this will redirect you to the OAuth provider's login page
 
 **Important:** After authorization, the provider redirects back to your callback URL with an authorization code.
@@ -183,7 +186,7 @@ Initiates the OAuth 2.0 authorization flow with server-side redirect. This endpo
 Client → GET /auth/oauth/{provider}/authorize 
       → Redirect to OAuth Provider
       → User authorizes
-      → Redirect to /auth/oauth/{provider}/callback?code=...&state=...
+      → Redirect to /api/auth/oauth/{provider}/callback?code=...&state=...
 \`\`\``,
   })
   @ApiParam({
@@ -215,7 +218,7 @@ Client → GET /auth/oauth/{provider}/authorize
       provider,
       redirectUri:
         redirectUri ||
-        `${this.configService.get<string>('BACKEND_URL')}/auth/oauth/${provider}/callback`,
+        `${this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000'}/api/auth/oauth/${provider}/callback`,
     });
 
     // Store state in session/cookie for verification (in production, use secure session)
@@ -271,7 +274,7 @@ This endpoint is called by the OAuth provider after user authorization. It:
     required: false,
     description:
       'Callback URL. Must match the redirect_uri used in the authorization request.',
-    example: 'http://localhost:3000/auth/oauth/google/callback',
+    example: 'http://localhost:3000/api/auth/oauth/google/callback',
   })
   @ApiQuery({
     name: 'frontend_redirect_uri',
@@ -303,12 +306,14 @@ This endpoint is called by the OAuth provider after user authorization. It:
       state,
       redirectUri:
         redirectUri ||
-        `${this.configService.get<string>('BACKEND_URL')}/auth/oauth/${provider}/callback`,
+        `${this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000'}/api/auth/oauth/${provider}/callback`,
     });
 
     // Get frontend URL from query param, env variable, or default
     const frontendUrl =
-      frontendRedirectUri || this.configService.get<string>('FRONTEND_URL');
+      frontendRedirectUri ||
+      this.configService.get<string>('FRONTEND_URL') ||
+      'http://localhost:3001';
 
     // Build redirect URL with tokens in hash fragment (more secure than query params)
     const redirectUrl = new URL('/auth/callback', frontendUrl);
