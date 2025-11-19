@@ -10,10 +10,13 @@ export type DatabaseConfig = z.infer<typeof databaseConfigSchema>;
 export const load = {
   from: {
     env: (env: NodeJS.ProcessEnv) => {
+      const replicaUrls = env.DATABASE_READ_REPLICA_URLS
+        ? env.DATABASE_READ_REPLICA_URLS.split(',').filter((url) => url.trim())
+        : [];
+
       const cfg: DatabaseConfig = {
         DATABASE_WRITE_URL: env.DATABASE_WRITE_URL!,
-        DATABASE_READ_REPLICA_URLS:
-          env.DATABASE_READ_REPLICA_URLS?.split(',') ?? [],
+        DATABASE_READ_REPLICA_URLS: replicaUrls,
       };
 
       return load.from.row(cfg);

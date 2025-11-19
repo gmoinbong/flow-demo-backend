@@ -11,6 +11,7 @@ import { ProfileModule } from 'src/modules/profile/profile.module';
 import { ScraperModule } from 'src/modules/scraper/scraper.module';
 import { CampaignsModule } from 'src/modules/campaigns/campaigns.module';
 import { CreatorModule } from 'src/modules/creator/creator.module';
+import { HealthModule } from 'src/modules/health/health.module';
 
 @Module({
   controllers: [AppController],
@@ -24,6 +25,7 @@ import { CreatorModule } from 'src/modules/creator/creator.module';
       http: process.env.NODE_ENV !== 'production',
     }),
     LoggerModule.forRoot(loggerOptions()),
+    HealthModule,
     AuthModule,
     ProfileModule,
     ScraperModule,
