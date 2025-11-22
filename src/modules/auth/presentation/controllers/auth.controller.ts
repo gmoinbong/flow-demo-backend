@@ -6,6 +6,7 @@ import {
   HttpStatus,
   UseGuards,
   Get,
+  Patch,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RegisterUseCase } from '../../application/use-cases/register.use-case';
@@ -15,6 +16,7 @@ import { RefreshTokenUseCase } from '../../application/use-cases/refresh-token.u
 import { RequestPasswordResetUseCase } from '../../application/use-cases/request-password-reset.use-case';
 import { VerifyResetTokenUseCase } from '../../application/use-cases/verify-reset-token.use-case';
 import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
+import { UpdateUserRoleUseCase } from '../../application/use-cases/update-user-role.use-case';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
 import {
@@ -23,6 +25,7 @@ import {
   ResetPasswordDto,
 } from '../dto/reset-password.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
+import { UpdateRoleDto } from '../dto/update-role.dto';
 import { JwtAuthGuard } from '../guards/jwt.guard';
 import { CurrentUser, CurrentUser as CurrentUserType } from '../decorators/current-user.decorator';
 import {
@@ -34,6 +37,7 @@ import {
   VerifyResetTokenResponseDto,
   ResetPasswordResponseDto,
   GetMeResponseDto,
+  UserResponseDto,
 } from '../dto/auth-response.dto';
 
 @Controller('auth')
@@ -47,6 +51,7 @@ export class AuthController {
     private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
     private readonly verifyResetTokenUseCase: VerifyResetTokenUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    private readonly updateUserRoleUseCase: UpdateUserRoleUseCase,
   ) {}
 
   @Post('register')
@@ -225,6 +230,41 @@ export class AuthController {
   })
   async getMe(@CurrentUser() user: CurrentUserType) {
     return user;
+  }
+
+  @Patch('role')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('bearer')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Update user role',
+    description: 'Обновить роль пользователя (creator или brand)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Role updated successfully',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input data (validation error)',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - invalid or missing token',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  async updateRole(
+    @CurrentUser() user: CurrentUserType,
+    @Body() dto: UpdateRoleDto,
+  ) {
+    return this.updateUserRoleUseCase.execute({
+      userId: user.id,
+      role: dto.role,
+    });
   }
 }
 

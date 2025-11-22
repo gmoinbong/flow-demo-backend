@@ -25,6 +25,7 @@ import { VerifyResetTokenUseCase } from './application/use-cases/verify-reset-to
 import { ResetPasswordUseCase } from './application/use-cases/reset-password.use-case';
 import { OAuthInitiateUseCase } from './application/use-cases/oauth-initiate.use-case';
 import { OAuthCallbackUseCase } from './application/use-cases/oauth-callback.use-case';
+import { UpdateUserRoleUseCase } from './application/use-cases/update-user-role.use-case';
 import { AuthController } from './presentation/controllers/auth.controller';
 import { OAuthController } from './presentation/controllers/oauth.controller';
 import { JwtAuthGuard } from './presentation/guards/jwt.guard';
@@ -302,6 +303,17 @@ import type { IUserRepository } from './domain/repositories/user.repository.inte
           oauthTokenService,
           refreshTokenRepo,
         ),
+    },
+    {
+      provide: UpdateUserRoleUseCase,
+      inject: [
+        AUTH_DI_TOKENS.USER_REPOSITORY,
+        AUTH_DI_TOKENS.ROLE_SERVICE,
+      ],
+      useFactory: (
+        userRepo: any,
+        roleService: RoleService,
+      ) => new UpdateUserRoleUseCase(userRepo, roleService),
     },
     // Guards
     {
