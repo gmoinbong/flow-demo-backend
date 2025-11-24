@@ -28,6 +28,7 @@ import { GetCreatorByIdUseCase } from '../../application/use-cases/get-creator-b
 import { AddSocialProfileUseCase } from '../../application/use-cases/add-social-profile.use-case';
 import { UpdateCreatorStatusUseCase } from '../../application/use-cases/update-creator-status.use-case';
 import { UpdateCreatorUseCase } from '../../application/use-cases/update-creator.use-case';
+import { CompleteCreatorOnboardingUseCase } from '../../application/use-cases/complete-creator-onboarding.use-case';
 import {
   GetCreatorsQueryDto,
   GetCreatorsResponseDto,
@@ -35,7 +36,9 @@ import {
 } from '../dto/get-creators.dto';
 import { UpdateCreatorDto } from '../dto/update-creator.dto';
 import { AddSocialProfileDto } from '../dto/add-social-profile.dto';
+import { CompleteCreatorOnboardingDto } from '../dto/complete-onboarding.dto';
 import { JwtAuthGuard } from 'src/modules/auth/presentation/guards/jwt.guard';
+import { CurrentUser } from 'src/modules/auth/presentation/decorators/current-user.decorator';
 import { Inject } from '@nestjs/common';
 import { SHARED_DI_TOKENS } from 'src/shared/core/infrastructure/constants/tokens';
 import type { Database } from 'src/shared/core/infrastructure/database/database.types';
@@ -54,6 +57,7 @@ export class CreatorController {
     private readonly addSocialProfileUseCase: AddSocialProfileUseCase,
     private readonly updateCreatorStatusUseCase: UpdateCreatorStatusUseCase,
     private readonly updateCreatorUseCase: UpdateCreatorUseCase,
+    private readonly completeCreatorOnboardingUseCase: CompleteCreatorOnboardingUseCase,
     @Inject(SHARED_DI_TOKENS.DATABASE_CLIENT)
     private readonly db: Database,
   ) {}
@@ -200,6 +204,54 @@ export class CreatorController {
       createdAt: creator.createdAt,
       updatedAt: creator.updatedAt,
     };
+  }
+
+  @Post('complete-onboarding')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Complete creator onboarding',
+    description: `
+      Завершить онбординг креатора.
+      
+      **Действия:**
+      - Обновляет статус профиля с 'pending' на 'active'
+      - Создает/обновляет социальные профили (Instagram, TikTok, YouTube)
+      - Обновляет bio профиля
+      
+      **Требования:**
+      - Пользователь должен иметь роль 'creator'
+      - Профиль должен существовать
+    `,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Onboarding completed successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Profile not found',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'User is not a creator or invalid data',
+  })
+  async completeOnboarding(
+    @CurrentUser() user: { id: string; email: string },
+    @Body() dto: CompleteCreatorOnboardingDto,
+  ) {
+    await this.completeCreatorOnboardingUseCase.execute({
+      userId: user.id,
+      instagramHandle: dto.instagramHandle,
+      instagramFollowers: dto.instagramFollowers,
+      tiktokHandle: dto.tiktokHandle,
+      tiktokFollowers: dto.tiktokFollowers,
+      youtubeHandle: dto.youtubeHandle,
+      youtubeSubscribers: dto.youtubeSubscribers,
+      niche: dto.niche,
+      bio: dto.bio,
+      audienceLocation: dto.audienceLocation,
+    });
+    return { message: 'Onboarding completed successfully' };
   }
 
   @Post(':id/social-profiles')

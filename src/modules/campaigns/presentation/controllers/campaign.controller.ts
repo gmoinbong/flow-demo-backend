@@ -185,11 +185,18 @@ export class CampaignController {
     return campaigns.map((campaign) => ({
       id: campaign.id,
       name: campaign.name,
+      description: campaign.description,
       status: campaign.status.value,
       budget: campaign.budget,
       currentBudget: campaign.currentBudget,
+      goals: campaign.goals,
+      targetAudience: campaign.targetAudience,
+      platforms: campaign.platforms,
+      audienceSize: campaign.audienceSize,
+      targetLocation: campaign.targetLocation,
       startDate: campaign.startDate,
       endDate: campaign.endDate,
+      createdAt: campaign.createdAt,
     }));
   }
 

@@ -11,13 +11,15 @@ import { GetCreatorsUseCase } from './application/use-cases/get-creators.use-cas
 import { AddSocialProfileUseCase } from './application/use-cases/add-social-profile.use-case';
 import { UpdateCreatorStatusUseCase } from './application/use-cases/update-creator-status.use-case';
 import { UpdateCreatorUseCase } from './application/use-cases/update-creator.use-case';
+import { CompleteCreatorOnboardingUseCase } from './application/use-cases/complete-creator-onboarding.use-case';
 // import { CreateBrandUseCase } from './application/use-cases/create-brand.use-case';
 // import { LinkCreatorToBrandUseCase } from './application/use-cases/link-creator-to-brand.use-case';
 import { CreatorController } from './presentation/controllers/creator.controller';
 import { CREATOR_DI_TOKENS } from './creator.tokens';
+import { ProfileModule } from '../profile/profile.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, ProfileModule],
   controllers: [CreatorController],
   providers: [
     // Repositories
@@ -43,6 +45,7 @@ import { CREATOR_DI_TOKENS } from './creator.tokens';
     AddSocialProfileUseCase,
     UpdateCreatorStatusUseCase,
     UpdateCreatorUseCase,
+    CompleteCreatorOnboardingUseCase,
     // Brand use cases - commented out until repositories are implemented
     // {
     //   provide: CreateBrandUseCase,

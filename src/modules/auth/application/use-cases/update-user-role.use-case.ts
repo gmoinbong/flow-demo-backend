@@ -14,20 +14,14 @@ export interface UpdateUserRoleOutput {
   role: string;
 }
 
-/**
- * Update user role use case
- * Updates user role after OAuth registration or role selection
- */
 export class UpdateUserRoleUseCase
-  implements UseCase<UpdateUserRoleInput, UpdateUserRoleOutput>
-{
+  implements UseCase<UpdateUserRoleInput, UpdateUserRoleOutput> {
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly roleService: RoleService,
-  ) {}
+  ) { }
 
   async execute(input: UpdateUserRoleInput): Promise<UpdateUserRoleOutput> {
-    // Find user
     const user = await this.userRepository.findById(input.userId);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -50,4 +44,5 @@ export class UpdateUserRoleUseCase
     };
   }
 }
+
 

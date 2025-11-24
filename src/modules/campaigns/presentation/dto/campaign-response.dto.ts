@@ -7,6 +7,9 @@ export class CampaignResponseDto {
   @ApiProperty({ example: 'Summer 2025 Campaign' })
   name: string;
 
+  @ApiProperty({ example: 'Campaign description', required: false })
+  description?: string;
+
   @ApiProperty({
     example: 'draft',
     enum: ['draft', 'active', 'paused', 'completed'],
@@ -22,7 +25,22 @@ export class CampaignResponseDto {
   })
   currentBudget: number;
 
-  @ApiProperty({ example: ['2025-01-01T00:00:00Z'] })
+  @ApiProperty({ example: ['reach', 'engagement'], type: [String], required: false })
+  goals?: string[];
+
+  @ApiProperty({ example: 'Fashion enthusiasts, 18-35', required: false })
+  targetAudience?: string;
+
+  @ApiProperty({ example: ['instagram', 'tiktok'], type: [String], required: false })
+  platforms?: string[];
+
+  @ApiProperty({ example: 'mid-tier', enum: ['micro', 'mid-tier', 'macro', 'mega'], required: false })
+  audienceSize?: string;
+
+  @ApiProperty({ example: 'United States', required: false })
+  targetLocation?: string;
+
+  @ApiProperty({ example: '2025-01-01T00:00:00Z' })
   startDate: Date;
 
   @ApiProperty({ example: '2025-12-31T23:59:59Z' })
