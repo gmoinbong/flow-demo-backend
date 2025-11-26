@@ -11,7 +11,7 @@ export class Swagger {
       **Modules:** Auth, Profile, Scraper
       
       **Authentication:**
-      1. POST /auth/login → получить accessToken
+      1. POST /api/auth/login → получить accessToken
       2. Нажать "Authorize" (🔒) → вставить токен
       3. Защищенные эндпоинты доступны
     `,
@@ -38,13 +38,14 @@ export class Swagger {
       .addTag('Auth', 'Authentication and authorization endpoints')
       .addTag('Profile', 'User profile management endpoints')
       .addTag('Scraper', 'Social media scraping endpoints')
+      .addTag('health', 'Health checks')
       .build();
 
     patchNestjsSwagger();
 
     const document = SwaggerModule.createDocument(app, documentConfig);
 
-    SwaggerModule.setup('docs', app, document, {
+    SwaggerModule.setup('api/docs', app, document, {
       swaggerOptions: {
         persistAuthorization: true,
         displayRequestDuration: true,

@@ -12,8 +12,18 @@ export const DatabaseConfigProvider: Provider = {
   provide: SHARED_DI_TOKENS.DATABASE_CONFIG,
   inject: [ConfigService],
   useFactory: (configService: ConfigService) => {
+    const databaseUrl =
+      configService.get<string>('DATABASE_WRITE_URL') ||
+      configService.get<string>('DATABASE_URL');
+
+    if (!databaseUrl) {
+      throw new Error(
+        'Database URL is required. Please set DATABASE_URL or DATABASE_WRITE_URL environment variable.',
+      );
+    }
+
     return load.from.env({
-      DATABASE_WRITE_URL: configService.get<string>('DATABASE_WRITE_URL'),
+      DATABASE_WRITE_URL: databaseUrl,
       DATABASE_READ_REPLICA_URLS: configService.get<string>(
         'DATABASE_READ_REPLICA_URLS',
       ),

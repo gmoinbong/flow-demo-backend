@@ -25,6 +25,7 @@ import { VerifyResetTokenUseCase } from './application/use-cases/verify-reset-to
 import { ResetPasswordUseCase } from './application/use-cases/reset-password.use-case';
 import { OAuthInitiateUseCase } from './application/use-cases/oauth-initiate.use-case';
 import { OAuthCallbackUseCase } from './application/use-cases/oauth-callback.use-case';
+import { UpdateUserRoleUseCase } from './application/use-cases/update-user-role.use-case';
 import { AuthController } from './presentation/controllers/auth.controller';
 import { OAuthController } from './presentation/controllers/oauth.controller';
 import { JwtAuthGuard } from './presentation/guards/jwt.guard';
@@ -36,6 +37,7 @@ import { GoogleOAuthProvider } from './infrastructure/oauth-providers/google-oau
 import { OAuthStateService } from './application/services/oauth-state.service';
 import { OAuthTokenService } from './application/services/oauth-token.service';
 import { RoleService } from './application/services/role.service';
+import type { IUserRepository } from './domain/repositories/user.repository.interface';
 
 @Module({
   controllers: [AuthController, OAuthController],
@@ -95,8 +97,8 @@ import { RoleService } from './application/services/role.service';
     },
     {
       provide: AUTH_DI_TOKENS.REFRESH_TOKEN_REPOSITORY,
-      inject: [SHARED_DI_TOKENS.DATABASE_CLIENT],
-      useFactory: (db: Database) => new RefreshTokenRepository(db),
+      inject: [AUTH_DI_TOKENS.REDIS_CLIENT],
+      useFactory: (redis: any) => new RefreshTokenRepository(redis),
     },
     {
       provide: AUTH_DI_TOKENS.RESET_TOKEN_REPOSITORY,
@@ -182,20 +184,33 @@ import { RoleService } from './application/services/role.service';
         AUTH_DI_TOKENS.PASSWORD_SERVICE,
         AUTH_DI_TOKENS.JWT_SERVICE,
         AUTH_DI_TOKENS.REDIS_LOCKOUT_SERVICE,
+        AUTH_DI_TOKENS.REFRESH_TOKEN_REPOSITORY,
       ],
       useFactory: (
         userRepo: any,
         passwordService: PasswordService,
         jwtService: JwtService,
         lockoutService: RedisLockoutService,
+        refreshTokenRepo: IRefreshTokenRepository,
       ) =>
-        new LoginUseCase(userRepo, passwordService, jwtService, lockoutService),
+        new LoginUseCase(
+          userRepo,
+          passwordService,
+          jwtService,
+          lockoutService,
+          refreshTokenRepo,
+        ),
     },
     {
       provide: LogoutUseCase,
-      inject: [AUTH_DI_TOKENS.REFRESH_TOKEN_REPOSITORY],
-      useFactory: (refreshTokenRepo: IRefreshTokenRepository) =>
-        new LogoutUseCase(refreshTokenRepo),
+      inject: [
+        AUTH_DI_TOKENS.REFRESH_TOKEN_REPOSITORY,
+        AUTH_DI_TOKENS.JWT_SERVICE,
+      ],
+      useFactory: (
+        refreshTokenRepo: IRefreshTokenRepository,
+        jwtService: JwtService,
+      ) => new LogoutUseCase(refreshTokenRepo, jwtService),
     },
     {
       provide: RefreshTokenUseCase,
@@ -268,6 +283,7 @@ import { RoleService } from './application/services/role.service';
         AUTH_DI_TOKENS.JWT_SERVICE,
         AUTH_DI_TOKENS.OAUTH_STATE_SERVICE,
         AUTH_DI_TOKENS.OAUTH_TOKEN_SERVICE,
+        AUTH_DI_TOKENS.REFRESH_TOKEN_REPOSITORY,
       ],
       useFactory: (
         oauthProviderService: OAuthProviderService,
@@ -276,6 +292,7 @@ import { RoleService } from './application/services/role.service';
         jwtService: JwtService,
         oauthStateService: OAuthStateService,
         oauthTokenService: OAuthTokenService,
+        refreshTokenRepo: IRefreshTokenRepository,
       ) =>
         new OAuthCallbackUseCase(
           oauthProviderService,
@@ -284,11 +301,40 @@ import { RoleService } from './application/services/role.service';
           jwtService,
           oauthStateService,
           oauthTokenService,
+          refreshTokenRepo,
         ),
     },
+    {
+      provide: UpdateUserRoleUseCase,
+      inject: [
+        AUTH_DI_TOKENS.USER_REPOSITORY,
+        AUTH_DI_TOKENS.ROLE_SERVICE,
+      ],
+      useFactory: (
+        userRepo: any,
+        roleService: RoleService,
+      ) => new UpdateUserRoleUseCase(userRepo, roleService),
+    },
     // Guards
+    {
+      provide: JwtAuthGuard,
+      inject: [
+        AUTH_DI_TOKENS.JWT_SERVICE,
+        AUTH_DI_TOKENS.USER_REPOSITORY,
+        AUTH_DI_TOKENS.ROLE_SERVICE,
+      ],
+      useFactory: (
+        jwtService: JwtService,
+        userRepository: IUserRepository,
+        roleService: RoleService,
+      ) => new JwtAuthGuard(jwtService, userRepository, roleService),
+    },
+  ],
+  exports: [
+    AUTH_DI_TOKENS.JWT_SERVICE,
+    AUTH_DI_TOKENS.USER_REPOSITORY,
+    AUTH_DI_TOKENS.ROLE_SERVICE,
     JwtAuthGuard,
   ],
-  exports: [AUTH_DI_TOKENS.JWT_SERVICE, JwtAuthGuard],
 })
 export class AuthModule {}

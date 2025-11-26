@@ -13,8 +13,16 @@ async function bootstrap() {
 
   app.useLogger(logger);
 
+  // Global prefix
+  app.setGlobalPrefix('api');
+
   Swagger.apply(app);
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port);
+
+  logger.log(`🚀 API is running on: http://localhost:${port}`);
+  logger.log(`📚 Swagger docs: http://localhost:${port}/api/docs`);
+  logger.log(`🏥 Health check: http://localhost:${port}/api/health`);
 }
 bootstrap();

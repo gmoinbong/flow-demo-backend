@@ -8,15 +8,21 @@ import {
 import { Request } from 'express';
 import { JwtService } from '../../application/services/jwt.service';
 import { AUTH_DI_TOKENS } from '../../auth.tokens';
+import type { IUserRepository } from '../../domain/repositories/user.repository.interface';
+import { RoleService } from '../../application/services/role.service';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
     @Inject(AUTH_DI_TOKENS.JWT_SERVICE)
     private readonly jwtService: JwtService,
+    @Inject(AUTH_DI_TOKENS.USER_REPOSITORY)
+    private readonly userRepository: IUserRepository,
+    @Inject(AUTH_DI_TOKENS.ROLE_SERVICE)
+    private readonly roleService: RoleService,
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const authHeader = request.headers.authorization;
 
@@ -35,10 +41,24 @@ export class JwtAuthGuard implements CanActivate {
         throw new UnauthorizedException('Invalid token type');
       }
 
+      // Get user from database to get roleId
+      const user = await this.userRepository.findById(payload.sub);
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      // Get role name by roleId
+      let roleName: string | undefined;
+      if (user.roleId) {
+        roleName = await this.roleService.getRoleNameById(user.roleId) || undefined;
+      }
+
       // Attach user info to request
       (request as any).user = {
-        id: payload.sub,
-        email: payload.email,
+        id: user.id,
+        email: user.email.getValue(),
+        roleId: user.roleId,
+        role: roleName,
       };
 
       return true;

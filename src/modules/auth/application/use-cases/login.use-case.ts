@@ -4,6 +4,7 @@ import { Email } from '../../domain/value-objects/email.vo';
 import { PasswordService } from '../services/password.service';
 import { JwtService, JwtToken } from '../services/jwt.service';
 import { RedisLockoutService } from '../services/redis-lockout.service';
+import { IRefreshTokenRepository } from '../../infrastructure/persistence/refresh-token.repository';
 import {
   UserNotFoundError,
   InvalidPasswordError,
@@ -33,6 +34,7 @@ export class LoginUseCase implements UseCase<LoginInput, LoginOutput> {
     private readonly passwordService: PasswordService,
     private readonly jwtService: JwtService,
     private readonly lockoutService: RedisLockoutService,
+    private readonly refreshTokenRepository: IRefreshTokenRepository,
   ) {}
 
   async execute(input: LoginInput): Promise<LoginOutput> {
@@ -71,11 +73,24 @@ export class LoginUseCase implements UseCase<LoginInput, LoginOutput> {
     await this.lockoutService.clearLockout(email.getValue());
 
     // Generate tokens
-    const accessToken = this.jwtService.generateAccessToken(
+    const refreshToken = this.jwtService.generateRefreshToken(
       user.id,
       user.email.getValue(),
     );
-    const refreshToken = this.jwtService.generateRefreshToken(
+    const refreshJti = this.jwtService.getJti(refreshToken.getValue());
+    
+    if (!refreshJti) {
+      throw new Error('Failed to generate refresh token jti');
+    }
+
+    // Save refresh token to Redis
+    await this.refreshTokenRepository.save(
+      refreshJti,
+      user.id,
+      refreshToken.getExpiresAt(),
+    );
+
+    const accessToken = this.jwtService.generateAccessToken(
       user.id,
       user.email.getValue(),
     );

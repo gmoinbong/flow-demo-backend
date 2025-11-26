@@ -1,7 +1,9 @@
-import { ICreatorRepository } from '../../domain/repositories/creator.repository.interface';
+import { Injectable, Inject } from '@nestjs/common';
+import type { ICreatorRepository } from '../../domain/repositories/creator.repository.interface';
 import { Creator } from '../../domain/entities/creator.entity';
 import { CreatorStatusVO } from '../../domain/value-objects/creator-status.vo';
 import { CreatorValidatorService } from '../services/creator-validator.service';
+import { CREATOR_DI_TOKENS } from '../../creator.tokens';
 
 export interface CreateCreatorCommand {
   userId: string;
@@ -11,9 +13,12 @@ export interface CreateCreatorCommand {
   status?: string;
 }
 
+@Injectable()
 export class CreateCreatorUseCase {
   constructor(
+    @Inject(CREATOR_DI_TOKENS.CREATOR_REPOSITORY)
     private readonly creatorRepository: ICreatorRepository,
+    @Inject(CREATOR_DI_TOKENS.CREATOR_VALIDATOR_SERVICE)
     private readonly validator: CreatorValidatorService,
   ) {}
 

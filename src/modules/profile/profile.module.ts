@@ -34,7 +34,7 @@ import { AuthModule } from '../auth/auth.module';
       useFactory: (profileRepo: any) => new UpdateProfileUseCase(profileRepo),
     },
   ],
-  exports: [],
+  exports: [PROFILE_DI_TOKENS.PROFILE_REPOSITORY],
 })
 export class ProfileModule {}
 

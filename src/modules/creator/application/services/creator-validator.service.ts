@@ -1,6 +1,9 @@
+import { Injectable } from '@nestjs/common';
+
 /**
  * Creator validator service
  */
+@Injectable()
 export class CreatorValidatorService {
   /**
    * Validate display name
