@@ -4,25 +4,32 @@ import { Logger } from 'nestjs-pino';
 import { Swagger } from './shared/core/presentation/docs/swagger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    bufferLogs: true,
-    snapshot: true,
-  });
+  try {
+    const app = await NestFactory.create(AppModule, {
+      bufferLogs: true,
+      snapshot: true,
+    });
 
-  const logger = app.get<Logger>(Logger);
+    const logger = app.get<Logger>(Logger);
 
-  app.useLogger(logger);
+    app.useLogger(logger);
 
-  // Global prefix
-  app.setGlobalPrefix('api');
+    // Global prefix
+    app.setGlobalPrefix('api');
 
-  Swagger.apply(app);
+    Swagger.apply(app);
 
-  const port = process.env.PORT ?? 3000;
-  await app.listen(port);
+    const port = process.env.PORT ?? 3000;
+    const host = process.env.HOSTNAME || '0.0.0.0';
+    
+    await app.listen(port, host);
 
-  logger.log(`🚀 API is running on: http://localhost:${port}`);
-  logger.log(`📚 Swagger docs: http://localhost:${port}/api/docs`);
-  logger.log(`🏥 Health check: http://localhost:${port}/api/health`);
+    logger.log(`🚀 API is running on: http://${host}:${port}`);
+    logger.log(`📚 Swagger docs: http://${host}:${port}/api/docs`);
+    logger.log(`🏥 Health check: http://${host}:${port}/api/health`);
+  } catch (error) {
+    console.error('Failed to start application:', error);
+    process.exit(1);
+  }
 }
 bootstrap();
