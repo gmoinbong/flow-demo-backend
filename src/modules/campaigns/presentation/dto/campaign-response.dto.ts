@@ -52,13 +52,13 @@ export class CampaignResponseDto {
 
 export class CampaignDetailResponseDto extends CampaignResponseDto {
   @ApiProperty({ example: 'Campaign description', required: false })
-  description?: string;
+  declare description?: string;
 
   @ApiProperty({ example: ['reach', 'engagement'], type: [String] })
-  goals: string[];
+  declare goals: string[];
 
   @ApiProperty({ example: ['instagram', 'tiktok'], type: [String] })
-  platforms: string[];
+  declare platforms: string[];
 }
 
 export class AllocationResponseDto {
