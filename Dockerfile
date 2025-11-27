@@ -26,7 +26,9 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/drizzle.config.* ./
-COPY package.json ./
+COPY --from=builder /app/migrate.js ./migrate.js
+COPY --from=builder /app/migration.ts ./migration.ts
+COPY --from=builder /app/package.json ./package.json
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
