@@ -48,14 +48,32 @@ import type { IUserRepository } from './domain/repositories/user.repository.inte
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
         const config = loadRedisConfig(configService);
-        const client = createClient({ url: config.url });
-        await client.connect();
-        return {
-          get: (key: string) => client.get(key),
-          set: (key: string, value: string, options?: { EX?: number }) =>
-            client.set(key, value, options as any),
-          del: (key: string) => client.del(key),
-        };
+        try {
+          const client = createClient({ url: config.url });
+          await client.connect();
+          return {
+            get: (key: string) => client.get(key),
+            set: (key: string, value: string, options?: { EX?: number }) =>
+              client.set(key, value, options as any),
+            del: (key: string) => client.del(key),
+          };
+        } catch (error) {
+          console.warn('Redis connection failed, using in-memory fallback:', error);
+          // Return in-memory fallback
+          const memoryStore = new Map<string, string>();
+          return {
+            get: async (key: string) => memoryStore.get(key) || null,
+            set: async (key: string, value: string, options?: { EX?: number }) => {
+              memoryStore.set(key, value);
+              if (options?.EX) {
+                setTimeout(() => memoryStore.delete(key), options.EX * 1000);
+              }
+            },
+            del: async (key: string) => {
+              memoryStore.delete(key);
+            },
+          };
+        }
       },
     },
     // Password Service
