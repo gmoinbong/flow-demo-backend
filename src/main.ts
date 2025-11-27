@@ -20,7 +20,7 @@ async function bootstrap() {
     Swagger.apply(app);
 
     const port = process.env.PORT ?? 3000;
-    const host = '184.107.178.23'; // Always listen on all interfaces
+    const host = '0.0.0.0'; // Always listen on all interfaces inside container
     
     await app.listen(port, host);
 
