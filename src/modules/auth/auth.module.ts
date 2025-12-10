@@ -185,15 +185,19 @@ import type { IUserRepository } from './domain/repositories/user.repository.inte
       inject: [
         AUTH_DI_TOKENS.USER_REPOSITORY,
         AUTH_DI_TOKENS.PASSWORD_SERVICE,
+        AUTH_DI_TOKENS.JWT_SERVICE,
         AUTH_DI_TOKENS.ROLE_SERVICE,
+        AUTH_DI_TOKENS.REFRESH_TOKEN_REPOSITORY,
         SHARED_DI_TOKENS.DATABASE_CLIENT,
       ],
       useFactory: (
         userRepo: any,
         passwordService: PasswordService,
+        jwtService: JwtService,
         roleService: RoleService,
+        refreshTokenRepo: IRefreshTokenRepository,
         db: Database,
-      ) => new RegisterUseCase(userRepo, passwordService, roleService, db),
+      ) => new RegisterUseCase(userRepo, passwordService, jwtService, roleService, refreshTokenRepo, db),
     },
     {
       provide: LoginUseCase,

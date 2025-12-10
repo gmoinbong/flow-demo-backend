@@ -69,6 +69,12 @@ export class RegisterResponseDto {
     required: false,
   })
   brand?: BrandResponseDto;
+
+  @ApiProperty({
+    description: 'JWT access token for API authentication',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  accessToken: string;
 }
 
 export class LoginResponseDto {

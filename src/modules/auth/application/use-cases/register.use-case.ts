@@ -8,6 +8,8 @@ import { UserAlreadyExistsError } from '../../domain/errors/auth-errors';
 import { randomUUID } from 'crypto';
 import { Database } from 'src/shared/core/infrastructure/database/database.types';
 import { profile, users, brands } from 'src/shared/core/infrastructure/database/schema';
+import { JwtService } from '../services/jwt.service';
+import { IRefreshTokenRepository } from '../../infrastructure/persistence/refresh-token.repository';
 
 export interface RegisterInput {
   email: string;
@@ -35,6 +37,7 @@ export interface RegisterOutput {
     id: string;
     name: string;
   };
+  accessToken: string;
 }
 
 /**
@@ -45,7 +48,9 @@ export class RegisterUseCase implements UseCase<RegisterInput, RegisterOutput> {
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly passwordService: PasswordService,
+    private readonly jwtService: JwtService,
     private readonly roleService: RoleService,
+    private readonly refreshTokenRepository: IRefreshTokenRepository,
     private readonly db: Database,
   ) {}
 
@@ -103,6 +108,29 @@ export class RegisterUseCase implements UseCase<RegisterInput, RegisterOutput> {
         updated_at: now,
       });
 
+      // Generate tokens after user creation
+      const refreshToken = this.jwtService.generateRefreshToken(
+        userId,
+        email.getValue(),
+      );
+      const refreshJti = this.jwtService.getJti(refreshToken.getValue());
+      
+      if (!refreshJti) {
+        throw new Error('Failed to generate refresh token jti');
+      }
+
+      // Save refresh token to Redis
+      await this.refreshTokenRepository.save(
+        refreshJti,
+        userId,
+        refreshToken.getExpiresAt(),
+      );
+
+      const accessToken = this.jwtService.generateAccessToken(
+        userId,
+        email.getValue(),
+      );
+
       const result: RegisterOutput = {
         user: {
           id: userId,
@@ -113,6 +141,7 @@ export class RegisterUseCase implements UseCase<RegisterInput, RegisterOutput> {
           id: profileId,
           status: 'pending',
         },
+        accessToken: accessToken.getValue(),
       };
 
       // If brand role, create brand record
