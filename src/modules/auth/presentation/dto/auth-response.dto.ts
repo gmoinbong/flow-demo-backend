@@ -75,6 +75,12 @@ export class RegisterResponseDto {
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
   accessToken: string;
+
+  @ApiProperty({
+    description: 'JWT refresh token for token renewal',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  refreshToken: string;
 }
 
 export class LoginResponseDto {
@@ -157,5 +163,12 @@ export class GetMeResponseDto extends UserResponseDto {
     required: false,
   })
   roleId?: number;
+
+  @ApiProperty({
+    description: 'Whether user has completed onboarding',
+    example: true,
+    required: false,
+  })
+  onboardingComplete?: boolean;
 }
 

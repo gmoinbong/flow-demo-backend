@@ -28,6 +28,7 @@ export interface RegisterOutput {
     id: string;
     email: string;
     role: string;
+    onboardingComplete?: boolean;
   };
   profile: {
     id: string;
@@ -38,6 +39,7 @@ export interface RegisterOutput {
     name: string;
   };
   accessToken: string;
+  refreshToken: string;
 }
 
 /**
@@ -136,12 +138,14 @@ export class RegisterUseCase implements UseCase<RegisterInput, RegisterOutput> {
           id: userId,
           email: email.getValue(),
           role: input.role,
+          onboardingComplete: false, // New users always need onboarding
         },
         profile: {
           id: profileId,
           status: 'pending',
         },
         accessToken: accessToken.getValue(),
+        refreshToken: refreshToken.getValue(), // Include refresh token in response
       };
 
       // If brand role, create brand record

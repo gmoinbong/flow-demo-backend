@@ -38,8 +38,12 @@ import { OAuthStateService } from './application/services/oauth-state.service';
 import { OAuthTokenService } from './application/services/oauth-token.service';
 import { RoleService } from './application/services/role.service';
 import type { IUserRepository } from './domain/repositories/user.repository.interface';
+import { ProfileModule } from '../profile/profile.module';
+import { PROFILE_DI_TOKENS } from '../profile/profile.tokens';
+import { forwardRef } from '@nestjs/common';
 
 @Module({
+  imports: [forwardRef(() => ProfileModule)],
   controllers: [AuthController, OAuthController],
   providers: [
     // Redis Client
@@ -344,12 +348,14 @@ import type { IUserRepository } from './domain/repositories/user.repository.inte
         AUTH_DI_TOKENS.JWT_SERVICE,
         AUTH_DI_TOKENS.USER_REPOSITORY,
         AUTH_DI_TOKENS.ROLE_SERVICE,
+        PROFILE_DI_TOKENS.PROFILE_REPOSITORY,
       ],
       useFactory: (
         jwtService: JwtService,
         userRepository: IUserRepository,
         roleService: RoleService,
-      ) => new JwtAuthGuard(jwtService, userRepository, roleService),
+        profileRepository: any,
+      ) => new JwtAuthGuard(jwtService, userRepository, roleService, profileRepository),
     },
   ],
   exports: [

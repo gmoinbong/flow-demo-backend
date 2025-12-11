@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { SHARED_DI_TOKENS } from 'src/shared/core/infrastructure/constants/tokens';
 import { Database } from 'src/shared/core/infrastructure/database/database.types';
 import { ProfileRepository } from './infrastructure/persistence/profile.repository';
@@ -9,7 +9,7 @@ import { PROFILE_DI_TOKENS } from './profile.tokens';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [forwardRef(() => AuthModule)],
   controllers: [ProfileController],
   providers: [
     // Repositories

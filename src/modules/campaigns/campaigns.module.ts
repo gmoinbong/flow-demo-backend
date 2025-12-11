@@ -3,6 +3,7 @@ import { SHARED_DI_TOKENS } from 'src/shared/core/infrastructure/constants/token
 import type { Database } from 'src/shared/core/infrastructure/database/database.types';
 import { AuthModule } from '../auth/auth.module';
 import { ScraperModule } from '../scraper/scraper.module';
+import { ProfileModule } from '../profile/profile.module';
 import { SCRAPER_DI_TOKENS } from '../scraper/scraper.tokens';
 import { ApifyScraperService } from '../scraper/infrastructure/services/apify-scraper.service';
 import { CAMPAIGNS_DI_TOKENS } from './campaigns.tokens';
@@ -25,7 +26,7 @@ import { CollectCreatorDataUseCase } from './application/use-cases/collect-creat
 import { CampaignController } from './presentation/controllers/campaign.controller';
 
 @Module({
-  imports: [AuthModule, ScraperModule],
+  imports: [AuthModule, ScraperModule, ProfileModule],
   controllers: [CampaignController],
   providers: [
     // Repositories

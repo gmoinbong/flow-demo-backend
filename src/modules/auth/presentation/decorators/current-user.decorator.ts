@@ -6,6 +6,7 @@ export interface CurrentUser {
   email: string;
   roleId?: number | null;
   role?: string;
+  onboardingComplete?: boolean;
 }
 
 /**

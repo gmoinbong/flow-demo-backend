@@ -8,9 +8,10 @@ import { FetchPostsUseCase } from './application/use-cases/fetch-posts.use-case'
 import { ScraperController } from './presentation/controllers/scraper.controller';
 import { SCRAPER_DI_TOKENS } from './scraper.tokens';
 import { AuthModule } from '../auth/auth.module';
+import { ProfileModule } from '../profile/profile.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, ProfileModule],
   controllers: [ScraperController],
   providers: [
     // Apify Configuration
