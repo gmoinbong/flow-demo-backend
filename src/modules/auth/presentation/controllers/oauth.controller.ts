@@ -86,13 +86,15 @@ Client → GET /auth/oauth/{provider}/initiate
     @Query('redirect_uri') redirectUri: string | undefined,
     @Res() res: Response,
   ) {
-    const defaultRedirectUri =
+    // Priority: query param > provider-specific env var > default from BACKEND_URL
+    const finalRedirectUri =
       redirectUri ||
+      this.getProviderRedirectUri(provider) ||
       `${this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000'}/api/auth/oauth/${provider}/callback`;
     
     const result = await this.oauthInitiateUseCase.execute({
       provider,
-      redirectUri: defaultRedirectUri,
+      redirectUri: finalRedirectUri,
     });
 
     res.redirect(result.authorizationUrl);
@@ -141,11 +143,15 @@ window.location.href = authorizationUrl;
     @Param('provider') provider: OAuthProvider,
     @Query('redirect_uri') redirectUri: string | undefined,
   ): Promise<OAuthUrlResponseDto> {
+    // Priority: query param > provider-specific env var > default from BACKEND_URL
+    const finalRedirectUri =
+      redirectUri ||
+      this.getProviderRedirectUri(provider) ||
+      `${this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000'}/api/auth/oauth/${provider}/callback`;
+
     const result = await this.oauthInitiateUseCase.execute({
       provider,
-      redirectUri:
-        redirectUri ||
-        `${this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000'}/api/auth/oauth/${provider}/callback`,
+      redirectUri: finalRedirectUri,
     });
 
     return {
@@ -214,11 +220,15 @@ Client → GET /auth/oauth/{provider}/authorize
     @Query('redirect_uri') redirectUri: string | undefined,
     @Res() res: Response,
   ) {
+    // Priority: query param > provider-specific env var > default from BACKEND_URL
+    const finalRedirectUri =
+      redirectUri ||
+      this.getProviderRedirectUri(provider) ||
+      `${this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000'}/api/auth/oauth/${provider}/callback`;
+
     const result = await this.oauthInitiateUseCase.execute({
       provider,
-      redirectUri:
-        redirectUri ||
-        `${this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000'}/api/auth/oauth/${provider}/callback`,
+      redirectUri: finalRedirectUri,
     });
 
     // Store state in session/cookie for verification (in production, use secure session)
@@ -300,13 +310,18 @@ This endpoint is called by the OAuth provider after user authorization. It:
     @Query('frontend_redirect_uri') frontendRedirectUri: string | undefined,
     @Res() res: Response,
   ) {
+    // Priority: query param > provider-specific env var > default from BACKEND_URL
+    // Must match the redirect_uri used in the authorization request
+    const finalRedirectUri =
+      redirectUri ||
+      this.getProviderRedirectUri(provider) ||
+      `${this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000'}/api/auth/oauth/${provider}/callback`;
+
     const result = await this.oauthCallbackUseCase.execute({
       provider,
       code,
       state,
-      redirectUri:
-        redirectUri ||
-        `${this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000'}/api/auth/oauth/${provider}/callback`,
+      redirectUri: finalRedirectUri,
     });
 
     // Get frontend URL from query param, env variable, or default
@@ -320,5 +335,24 @@ This endpoint is called by the OAuth provider after user authorization. It:
     redirectUrl.hash = `access_token=${result.accessToken}&refresh_token=${result.refreshToken}&user=${encodeURIComponent(JSON.stringify(result.user))}&isNewUser=${result.isNewUser}`;
 
     res.redirect(redirectUrl.toString());
+  }
+
+  /**
+   * Get provider-specific redirect URI from environment variables
+   * Returns null if not configured
+   */
+  private getProviderRedirectUri(provider: OAuthProvider): string | null {
+    const envVarMap: Record<OAuthProvider, string> = {
+      google: 'GOOGLE_REDIRECT_URI',
+      tiktok: 'TIKTOK_REDIRECT_URI',
+      instagram: 'INSTAGRAM_REDIRECT_URI',
+    };
+
+    const envVar = envVarMap[provider];
+    if (!envVar) {
+      return null;
+    }
+
+    return this.configService.get<string>(envVar) || null;
   }
 }
