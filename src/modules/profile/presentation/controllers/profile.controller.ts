@@ -58,7 +58,7 @@ export class ProfileController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update current user profile',
-    description: 'Обновить профиль (firstName, lastName, displayName, bio, avatarUrl)',
+    description: 'Обновить профиль (firstName, lastName, displayName, bio, avatarUrl, status)',
   })
   @ApiResponse({
     status: 200,
@@ -88,6 +88,7 @@ export class ProfileController {
       displayName: dto.displayName,
       bio: dto.bio,
       avatarUrl: dto.avatarUrl,
+      status: dto.status,
     });
 
     return {

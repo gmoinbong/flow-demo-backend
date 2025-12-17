@@ -9,6 +9,7 @@ export interface UpdateProfileCommand {
   displayName?: string | null;
   bio?: string | null;
   avatarUrl?: string | null;
+  status?: 'pending' | 'active' | 'suspended';
 }
 
 export class UpdateProfileUseCase {
@@ -20,6 +21,24 @@ export class UpdateProfileUseCase {
       throw new NotFoundException('Profile not found');
     }
 
+    // If status is provided, create updated profile with new status
+    if (command.status) {
+      const updatedProfile = Profile.fromPersistence(
+        profile.id,
+        profile.userId,
+        command.firstName !== undefined ? command.firstName : profile.firstName,
+        command.lastName !== undefined ? command.lastName : profile.lastName,
+        command.displayName !== undefined ? command.displayName : profile.displayName,
+        command.bio !== undefined ? command.bio : profile.bio,
+        command.avatarUrl !== undefined ? command.avatarUrl : profile.avatarUrl,
+        command.status,
+        profile.createdAt,
+        new Date(),
+      );
+      return await this.profileRepository.save(updatedProfile);
+    }
+
+    // Otherwise just update basic fields
     const updatedProfile = profile.update(
       command.firstName !== undefined ? command.firstName : profile.firstName,
       command.lastName !== undefined ? command.lastName : profile.lastName,

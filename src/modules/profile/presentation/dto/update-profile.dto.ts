@@ -7,6 +7,7 @@ export const UpdateProfileDtoSchema = z.object({
   displayName: z.string().min(1).optional().nullable(),
   bio: z.string().max(1000).optional().nullable(),
   avatarUrl: z.string().url().optional().nullable(),
+  status: z.enum(['pending', 'active', 'suspended']).optional(),
 });
 
 export class UpdateProfileDto extends createZodDto(UpdateProfileDtoSchema) {}
