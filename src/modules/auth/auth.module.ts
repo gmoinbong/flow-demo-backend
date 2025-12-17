@@ -335,11 +335,13 @@ import { forwardRef } from '@nestjs/common';
       inject: [
         AUTH_DI_TOKENS.USER_REPOSITORY,
         AUTH_DI_TOKENS.ROLE_SERVICE,
+        SHARED_DI_TOKENS.DATABASE_CLIENT,
       ],
       useFactory: (
         userRepo: any,
         roleService: RoleService,
-      ) => new UpdateUserRoleUseCase(userRepo, roleService),
+        db: Database,
+      ) => new UpdateUserRoleUseCase(userRepo, roleService, db),
     },
     // Guards
     {

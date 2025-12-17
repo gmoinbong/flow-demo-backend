@@ -261,10 +261,14 @@ export class AuthController {
     @CurrentUser() user: CurrentUserType,
     @Body() dto: UpdateRoleDto,
   ) {
-    return this.updateUserRoleUseCase.execute({
+    await this.updateUserRoleUseCase.execute({
       userId: user.id,
       role: dto.role,
     });
+    
+    // Return full user data after role update (including onboardingComplete)
+    // This ensures frontend has complete user state
+    return user;
   }
 }
 
