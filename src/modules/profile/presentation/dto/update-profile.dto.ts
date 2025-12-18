@@ -8,6 +8,9 @@ export const UpdateProfileDtoSchema = z.object({
   bio: z.string().max(1000).optional().nullable(),
   avatarUrl: z.string().url().optional().nullable(),
   status: z.enum(['pending', 'active', 'suspended']).optional(),
+  // Brand-specific fields
+  companySize: z.string().optional().nullable(),
+  userRole: z.string().optional().nullable(),
 });
 
 export class UpdateProfileDto extends createZodDto(UpdateProfileDtoSchema) {}

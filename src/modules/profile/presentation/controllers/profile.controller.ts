@@ -89,6 +89,8 @@ export class ProfileController {
       bio: dto.bio,
       avatarUrl: dto.avatarUrl,
       status: dto.status,
+      companySize: dto.companySize,
+      userRole: dto.userRole,
     });
 
     return {

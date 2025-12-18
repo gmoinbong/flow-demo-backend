@@ -30,8 +30,12 @@ import { AuthModule } from '../auth/auth.module';
     },
     {
       provide: UpdateProfileUseCase,
-      inject: [PROFILE_DI_TOKENS.PROFILE_REPOSITORY],
-      useFactory: (profileRepo: any) => new UpdateProfileUseCase(profileRepo),
+      inject: [
+        PROFILE_DI_TOKENS.PROFILE_REPOSITORY,
+        SHARED_DI_TOKENS.DATABASE_CLIENT,
+      ],
+      useFactory: (profileRepo: any, db: Database) =>
+        new UpdateProfileUseCase(profileRepo, db),
     },
   ],
   exports: [PROFILE_DI_TOKENS.PROFILE_REPOSITORY],
